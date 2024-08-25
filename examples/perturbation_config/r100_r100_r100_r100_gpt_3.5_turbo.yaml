@@ -1,0 +1,14 @@
+perturbation:
+- ratio: 1.0
+  type: replace
+- ratio: 1.0
+  type: replace
+- ratio: 1.0
+  type: replace
+- ratio: 1.0
+  type: replace
+remain_config:
+  api_key: 'sk-xAaNIS7rt4wKdwXX18406e5842034f12A857776822015803'
+  base_url: https://api3.apifans.com/v1
+  model_name: gpt-3.5-turbo-1106
+  stop: <|eot_id|>

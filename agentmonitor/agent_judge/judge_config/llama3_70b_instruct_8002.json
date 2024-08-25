@@ -1,0 +1,9 @@
+{
+    "judge_type": "OpenaiJudge",
+    "model_name": "casperhansen/llama-3-70b-instruct-awq",
+    "base_url": "http://localhost:8002/v1",
+    "api_key": "123",
+    "stop": "<|eot_id|>",
+    "max_tokens": 512,
+    "temperature": 0
+}

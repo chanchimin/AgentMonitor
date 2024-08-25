@@ -1,0 +1,13 @@
+# Full Example: https://github.com/geekan/MetaGPT/blob/main/config/config2.example.yaml
+# Reflected Code: https://github.com/geekan/MetaGPT/blob/main/metagpt/config2.py
+llm:
+  api_type: "openai"  # or azure / ollama / open_llm etc. Check LLMType for more options
+  model: "Orenguteng/Llama-3-8B-Lexi-Uncensored"  # or gpt-3.5-turbo-1106 / gpt-4-1106-preview
+  base_url: "http://localhost:8004/v1"  # or forward url / other llm url
+  api_key: "123"
+  use_vllm: true
+  max_token: 512
+  stop: ["<|eot_id|>", "<|end_of_text|>"]
+  stream: false
+  timeout: 100
+

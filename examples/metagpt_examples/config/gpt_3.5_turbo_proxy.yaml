@@ -1,0 +1,9 @@
+# Full Example: https://github.com/geekan/MetaGPT/blob/main/config/config2.example.yaml
+# Reflected Code: https://github.com/geekan/MetaGPT/blob/main/metagpt/config2.py
+llm:
+  api_type: "openai"  # or azure / ollama / open_llm etc. Check LLMType for more options
+  model: "gpt-3.5-turbo-1106"  # or gpt-3.5-turbo-1106 / gpt-4-1106-preview
+  base_url: "your base url"  # or forward url / other llm url
+  api_key: "your api key"
+  use_vllm: false
+  stream: false
