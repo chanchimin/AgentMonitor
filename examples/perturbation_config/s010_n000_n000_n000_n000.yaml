@@ -1,0 +1,11 @@
+perturbation:
+- ratio: 0.1
+  type: shuffle
+- ratio: 0
+  type: no_perturbation
+- ratio: 0
+  type: no_perturbation
+- ratio: 0
+  type: no_perturbation
+- ratio: 0
+  type: no_perturbation

@@ -1,0 +1,9 @@
+perturbation:
+- ratio: 0
+  type: no_perturbation
+- ratio: 0
+  type: no_perturbation
+- ratio: 0
+  type: no_perturbation
+- ratio: 0.7
+  type: gibberish

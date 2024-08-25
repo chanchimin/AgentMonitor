@@ -1,0 +1,9 @@
+{
+    "judge_type": "OpenaiJudge",
+    "model_name": "Orenguteng/Llama-3-8B-Lexi-Uncensored",
+    "base_url": "http://localhost:8004/v1",
+    "api_key": "123",
+    "stop": "<|eot_id|>",
+    "max_tokens": 512,
+    "temperature": 0
+}

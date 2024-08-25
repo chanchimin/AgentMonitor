@@ -1,0 +1,14 @@
+perturbation:
+- ratio: 1.0
+  type: replace
+- ratio: 1.0
+  type: replace
+- ratio: 1.0
+  type: replace
+- ratio: 1.0
+  type: replace
+remain_config:
+  api_key: '123'
+  base_url: http://localhost:8003/v1
+  model_name: Orenguteng/Llama-3-8B-Lexi-Uncensored
+  stop: <|eot_id|>

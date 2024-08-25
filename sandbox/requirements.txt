@@ -1,0 +1,6 @@
+pytest
+flask
+gunicorn
+tree-sitter==0.22.3
+tree-sitter-python
+requests
