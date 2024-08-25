@@ -7,7 +7,7 @@ class SerperGoogleSearch:
     def __init__(self,):
         self.url = "https://google.serper.dev/search"
         self.headers = {
-          'X-API-KEY': '6b907231b7a5840280cfb3292ebbbe93b2710fcd',
+          'X-API-KEY': '***REMOVED***',
           'Content-Type': 'application/json'
         }
 
