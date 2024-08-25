@@ -10,11 +10,12 @@
 
 </div>
 
+
+This is the repo for our paper: "AgentMonitor: A Plug-and-Play Framework for Predictive and Secure Multi-Agent Systems"
+
 ## Introduction
 AgentMonitor is a framework designed to capture and analyze inputs and outputs at each step of the agent interaction process. By transforming this data into meaningful statistics, AgentMonitor enables the (1) training of regression models—such as XGBoost—to predict the downstream task performance of multi-agent teams. (2) post-edit the responses generated each step on-the-fly.
 
-
-## Get Started
 
 
 ## Installation
