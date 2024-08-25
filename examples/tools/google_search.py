@@ -2,7 +2,7 @@ import requests
 import backoff
 
 class GoogleSearch:
-    def __init__(self, api_key="***REMOVED***"):
+    def __init__(self, api_key="e4e58032c6msh10621fb3e7bc2d8p135fa7jsn4c41242b17e2"):
         self.url = "https://google-search74.p.rapidapi.com/"
         self.headers = {
             "x-rapidapi-key": api_key,
