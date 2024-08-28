@@ -407,9 +407,9 @@ class AnswerExtractor(Role):
 
 async def main(
     task: str = "gsm8k",
-    output_path: str = "output/test/3.5_3.5_3.5_3.5/perturbation_config/test",
+    output_path: str = "output/test/3.5_3.5_3.5_3.5/",
     llm_config_files=["gpt_3.5_turbo_proxy.yaml", "gpt_3.5_turbo_proxy.yaml", "gpt_3.5_turbo_proxy.yaml", "gpt_3.5_turbo_proxy.yaml"],
-    perturbation_config="../perturbation_config/r100_r100_r100_r100_gpt_3.5_turbo.yaml",
+    perturbation_config=None,
     debug=False,
     overwrite_output=False,
     n_round=3
@@ -468,6 +468,7 @@ async def main(
     else:
         # a large number that index will not overflow
         perturbation_config = [{'type': 'no_perturbation', 'ratio': 0} for _ in range(10)]
+        perturbation_remain_config = None
 
     # it contains total turn results as [{"turn1": ..., "turn2": ..., "turn3": ...}, {"turn1": ..., "turn2": ...}]
     total_results = []

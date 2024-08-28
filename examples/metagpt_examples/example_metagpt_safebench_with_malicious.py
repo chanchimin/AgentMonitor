@@ -519,7 +519,7 @@ async def main(
     else:
         # a large number that index will not overflow
         perturbation_config = [{'type': 'no_perturbation', 'ratio': 0} for _ in range(10)]
-
+        perturbation_remain_config = None
 
 
     # it contains total turn results as [{"turn1": ..., "turn2": ..., "turn3": ...}, {"turn1": ..., "turn2": ...}]

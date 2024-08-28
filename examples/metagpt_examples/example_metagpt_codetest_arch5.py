@@ -596,6 +596,7 @@ async def main(
     else:
         # a large number that index will not overflow
         perturbation_config = [{'type': 'no_perturbation', 'ratio': 0} for _ in range(10)]
+        perturbation_remain_config = None
 
     # it contains total turn results as [{"turn1": ..., "turn2": ..., "turn3": ...}, {"turn1": ..., "turn2": ...}]
     total_results = []
@@ -618,14 +619,15 @@ async def main(
         if task != "humaneval":
             answerextractor = AnswerExtractor(config=llm_configs_dicts[2])
 
-        await monitor.register(executor, executor.put_message, executor._act, executor._think, context_in_str="rc.memory.storage", prompt=executor.actions[0].PROMPT_TEMPLATE, name="executor", input_turbulence_type=perturbation2int[perturbation_config[0]["type"]], input_noise_prob=perturbation_config[0]["ratio"])
+        await monitor.register(executor, executor.put_message, executor._act, executor._think, context_in_str="rc.memory.storage", prompt=executor.actions[0].PROMPT_TEMPLATE, name="executor", input_turbulence_type=perturbation2int[perturbation_config[0]["type"]], input_noise_prob=perturbation_config[0]["ratio"], **(perturbation_remain_config or {}))
         await monitor.register(webbrowser, webbrowser.put_message, webbrowser._act, webbrowser._think,
                                context_in_str="rc.memory.storage", prompt=webbrowser.actions[0].PROMPT_TEMPLATE,
                                name="webbrowser",
                                input_turbulence_type=perturbation2int[perturbation_config[1]["type"]],
-                               input_noise_prob=perturbation_config[1]["ratio"])
+                               input_noise_prob=perturbation_config[1]["ratio"],
+                               **(perturbation_remain_config or {}))
         if task != "humaneval":
-            await monitor.register(answerextractor, answerextractor.put_message, answerextractor._act, answerextractor._think, context_in_str="rc.memory.storage", name="answerextractor", input_turbulence_type=perturbation2int[perturbation_config[2]["type"]], input_noise_prob=perturbation_config[2]["ratio"])
+            await monitor.register(answerextractor, answerextractor.put_message, answerextractor._act, answerextractor._think, context_in_str="rc.memory.storage", name="answerextractor", input_turbulence_type=perturbation2int[perturbation_config[2]["type"]], input_noise_prob=perturbation_config[2]["ratio"], **(perturbation_remain_config or {}))
         if task != "humaneval":
             team.hire(
                 [

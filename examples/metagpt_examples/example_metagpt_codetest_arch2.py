@@ -516,6 +516,7 @@ async def main(
     else:
         # a large number that index will not overflow
         perturbation_config = [{'type': 'no_perturbation', 'ratio': 0} for _ in range(10)]
+        perturbation_remain_config = None
 
     # it contains total turn results as [{"turn1": ..., "turn2": ..., "turn3": ...}, {"turn1": ..., "turn2": ...}]
     total_results = []
@@ -539,12 +540,12 @@ async def main(
             dummyagent = DummyAgent(config=llm_configs_dicts[4])
         else:
             dummyagent = DummyAgent(config=llm_configs_dicts[3])
-        await monitor.register(simplecoder, simplecoder.put_message, simplecoder._act, simplecoder._think, context_in_str="rc.memory.storage", prompt=simplecoder.actions[0].PROMPT_TEMPLATE, name="simplecoder", input_turbulence_type=perturbation2int[perturbation_config[0]["type"]], input_noise_prob=perturbation_config[0]["ratio"])
-        await monitor.register(simpletester, simpletester.put_message, simpletester._act, simpletester._think, context_in_str="rc.memory.storage", prompt=simpletester.actions[0].PROMPT_TEMPLATE, name="simpletester", input_turbulence_type=perturbation2int[perturbation_config[1]["type"]], input_noise_prob=perturbation_config[1]["ratio"])
-        await monitor.register(simplereviewer, simplereviewer.put_message, simplereviewer._act, simplereviewer._think, context_in_str="rc.memory.storage", prompt=simplereviewer.actions[0].PROMPT_TEMPLATE, name="simplereviewer", input_turbulence_type=perturbation2int[perturbation_config[2]["type"]], input_noise_prob=perturbation_config[2]["ratio"])
+        await monitor.register(simplecoder, simplecoder.put_message, simplecoder._act, simplecoder._think, context_in_str="rc.memory.storage", prompt=simplecoder.actions[0].PROMPT_TEMPLATE, name="simplecoder", input_turbulence_type=perturbation2int[perturbation_config[0]["type"]], input_noise_prob=perturbation_config[0]["ratio"], **(perturbation_remain_config or {}))
+        await monitor.register(simpletester, simpletester.put_message, simpletester._act, simpletester._think, context_in_str="rc.memory.storage", prompt=simpletester.actions[0].PROMPT_TEMPLATE, name="simpletester", input_turbulence_type=perturbation2int[perturbation_config[1]["type"]], input_noise_prob=perturbation_config[1]["ratio"], **(perturbation_remain_config or {}))
+        await monitor.register(simplereviewer, simplereviewer.put_message, simplereviewer._act, simplereviewer._think, context_in_str="rc.memory.storage", prompt=simplereviewer.actions[0].PROMPT_TEMPLATE, name="simplereviewer", input_turbulence_type=perturbation2int[perturbation_config[2]["type"]], input_noise_prob=perturbation_config[2]["ratio"], **(perturbation_remain_config or {}))
         if task != "humaneval":
-            await monitor.register(answerextractor, answerextractor.put_message, answerextractor._act, answerextractor._think, context_in_str="rc.memory.storage", name="answerextractor", input_turbulence_type=perturbation2int[perturbation_config[3]["type"]], input_noise_prob=perturbation_config[3]["ratio"])
-        await monitor.register(dummyagent, dummyagent.put_message, dummyagent._act, dummyagent._think, context_in_str="rc.memory.storage", prompt=dummyagent.actions[0].PROMPT_TEMPLATE, name="dummyagent", input_turbulence_type=perturbation2int[perturbation_config[-1]["type"]], input_noise_prob=perturbation_config[-1]["ratio"])
+            await monitor.register(answerextractor, answerextractor.put_message, answerextractor._act, answerextractor._think, context_in_str="rc.memory.storage", name="answerextractor", input_turbulence_type=perturbation2int[perturbation_config[3]["type"]], input_noise_prob=perturbation_config[3]["ratio"], **(perturbation_remain_config or {}))
+        await monitor.register(dummyagent, dummyagent.put_message, dummyagent._act, dummyagent._think, context_in_str="rc.memory.storage", prompt=dummyagent.actions[0].PROMPT_TEMPLATE, name="dummyagent", input_turbulence_type=perturbation2int[perturbation_config[-1]["type"]], input_noise_prob=perturbation_config[-1]["ratio"], **(perturbation_remain_config or {}))
         if task != "humaneval":
             team.hire(
                 [
