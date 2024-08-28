@@ -31,6 +31,23 @@ def get_attribute(obj, attr_str):
         obj = getattr(obj, attr)
     return obj
 
+def parse_message(obj):
+    """
+    parse content of message
+    """
+    if isinstance(obj, list):
+        new_obj = []
+        for i in range(len(obj)):
+            new_obj_i = parse_message(obj[i])
+            new_obj.append(new_obj_i)
+        return new_obj
+    else:
+        attrs = vars(obj)
+        for attr, value in attrs.items():
+            if attr == "content":
+                return str(value)
+        return str(obj)
+
 
 @backoff.on_exception(
         backoff.fibo,
@@ -277,9 +294,11 @@ class AgentMonitor:
             obj_key = self.agent_keys[input_func]
             if isinstance(args[0], type(self.agents[obj_key])):
                 input_message = args[1]
+                input_message = parse_message(input_message)
                 result = await input_func(*args[1:], **kwargs)
             else:
                 input_message = args[0]
+                input_message = parse_message(input_message)
                 result = await input_func(*args, **kwargs)
             history_len = max(self.input_len[obj_key], self.output_len[obj_key], self.state_len[obj_key])
             if self.input_len[obj_key] == history_len:
@@ -315,9 +334,11 @@ class AgentMonitor:
             obj_key = self.agent_keys[input_func]
             if isinstance(args[0], type(self.agents[obj_key])):
                 input_message = args[1]
+                input_message = parse_message(input_message)
                 result = input_func(*args[1:], **kwargs)
             else:
                 input_message = args[0]
+                input_message = parse_message(input_message)
                 result = input_func(*args, **kwargs)
             history_len = max(self.input_len[obj_key], self.output_len[obj_key], self.state_len[obj_key])
             if self.input_len[obj_key] == history_len:
@@ -354,10 +375,13 @@ class AgentMonitor:
             if self.func[obj_key]["input_func"] == output_func:
                 if isinstance(args[0], type(self.agents[obj_key])):
                     input_message = args[1]
+                    input_message = parse_message(input_message)
                     result = await output_func(*args[1:], **kwargs)
                 else:
                     input_message = args[0]
+                    input_message = parse_message(input_message)
                     result = await output_func(*args, **kwargs)
+                result_str = parse_message(result)
                 history_len = max(self.output_len[obj_key], self.state_len[obj_key])
                 if self.output_len[obj_key] == history_len:
                     self.history[obj_key].append(
@@ -365,7 +389,7 @@ class AgentMonitor:
                             "name": self.names[obj_key],
                             "content": {
                                 "input": str(input_message),
-                                "output": str(result),
+                                "output": result_str,
                                 "next state": "",
                                 "context": "",
                             }
@@ -377,22 +401,22 @@ class AgentMonitor:
                     self.input_num[obj_key] += 1
                     self.output_num[obj_key] += 1
                     self.input_tokens[obj_key] += count_tokens(str(input_message))
-                    self.output_tokens[obj_key] += count_tokens(str(result))
+                    self.output_tokens[obj_key] += count_tokens(result_str)
                     self.sequence.append(obj_key)
                 else:
                     self.history[obj_key][-1]["content"]["input"] = str(input_message)
-                    self.history[obj_key][-1]["content"]["output"] = str(result)
+                    self.history[obj_key][-1]["content"]["output"] = result_str
                     if self.context_in_str[obj_key]:
                         self.history[obj_key][-1]["content"]["context"] = "\n".join(str(item) for item in get_attribute(self.agents[obj_key], self.context_in_str[obj_key]))
                     self.output_len[obj_key] = history_len
                     self.input_num[obj_key] += 1
                     self.output_num[obj_key] += 1
                     self.input_tokens[obj_key] += count_tokens(str(input_message))
-                    self.output_tokens[obj_key] += count_tokens(str(result))
+                    self.output_tokens[obj_key] += count_tokens(result_str)
                 # print("=> Input_Monitor Func@"+str(output_func)+" of Agent @"+str(obj_key)+", Name: ["+str(self.names[obj_key])+"]")
                 # print("   Input: "+str(input_message))
                 # print("=> Output_Monitor Func@"+str(output_func)+" of Agent @"+str(obj_key)+", Name: ["+str(self.names[obj_key])+"]")
-                # print("   Output: "+str(result))
+                # print("   Output: "+result_str)
             else:
                 if args:
                     if isinstance(args[0], type(self.agents[obj_key])):
@@ -401,6 +425,7 @@ class AgentMonitor:
                         result = await output_func(*args, **kwargs)
                 else:
                     result = await output_func(*args, **kwargs)
+                result_str = parse_message(result)
                 history_len = max(self.input_len[obj_key], self.output_len[obj_key], self.state_len[obj_key])
                 if self.output_len[obj_key] == history_len:
                     self.history[obj_key].append(
@@ -408,7 +433,7 @@ class AgentMonitor:
                             "name": self.names[obj_key],
                             "content": {
                                 "input": "",
-                                "output": str(result),
+                                "output": result_str,
                                 "next state": "",
                                 "context": "",
                             }
@@ -418,19 +443,19 @@ class AgentMonitor:
                         self.history[obj_key][-1]["content"]["context"] = "\n".join(str(item) for item in get_attribute(self.agents[obj_key], self.context_in_str[obj_key]))
                     self.output_len[obj_key] += 1
                     self.output_num[obj_key] += 1
-                    self.output_tokens[obj_key] += count_tokens(str(result))
+                    self.output_tokens[obj_key] += count_tokens(result_str)
                     self.sequence.append(obj_key)
                 else:
-                    self.history[obj_key][-1]["content"]["output"] = str(result)
+                    self.history[obj_key][-1]["content"]["output"] = result_str
                     if self.context_in_str[obj_key]:
                         self.history[obj_key][-1]["content"]["context"] = "\n".join(str(item) for item in get_attribute(self.agents[obj_key], self.context_in_str[obj_key]))
                     self.output_len[obj_key] = history_len
                     self.output_num[obj_key] += 1
-                    self.output_tokens[obj_key] += count_tokens(str(result))
+                    self.output_tokens[obj_key] += count_tokens(result_str)
 
                 # print("=> Output_Monitor Func@"+str(output_func)+" of Agent @"+str(obj_key)+", Name: ["+str(self.names[obj_key])+"]")
                 # print("=> Output_Monitor Name: ["+str(self.names[obj_key])+"]")
-                # print("   Output: "+str(result))
+                # print("   Output: "+result_str)
 
             # traverse the actions and record the prompt and response for each node (post_edit feature)
             # the :actions: is used in metagpt
@@ -464,10 +489,13 @@ class AgentMonitor:
             if self.func[obj_key]["input_func"] == output_func:
                 if isinstance(args[0], type(self.agents[obj_key])):
                     input_message = args[1]
+                    input_message = parse_message(input_message)
                     result = output_func(*args[1:], **kwargs)
                 else:
                     input_message = args[0]
+                    input_message = parse_message(input_message)
                     result = output_func(*args, **kwargs)
+                result_str = parse_message(result)
                 history_len = max(self.output_len[obj_key], self.state_len[obj_key])
                 if self.output_len[obj_key] == history_len:
                     self.history[obj_key].append(
@@ -475,7 +503,7 @@ class AgentMonitor:
                             "name": self.names[obj_key],
                             "content": {
                                 "input": str(input_message),
-                                "output": str(result),
+                                "output": result_str,
                                 "next state": "",
                                 "context": "",
                             }
@@ -487,22 +515,22 @@ class AgentMonitor:
                     self.input_num[obj_key] += 1
                     self.output_num[obj_key] += 1
                     self.input_tokens[obj_key] += count_tokens(str(input_message))
-                    self.output_tokens[obj_key] += count_tokens(str(result))
+                    self.output_tokens[obj_key] += count_tokens(result_str)
                     self.sequence.append(obj_key)
                 else:
                     self.history[obj_key][-1]["content"]["input"] = str(input_message)
-                    self.history[obj_key][-1]["content"]["output"] = str(result)
+                    self.history[obj_key][-1]["content"]["output"] = result_str
                     if self.context_in_str[obj_key]:
                         self.history[obj_key][-1]["content"]["context"] = "\n".join(str(item) for item in get_attribute(self.agents[obj_key], self.context_in_str[obj_key]))
                     self.output_len[obj_key] = history_len
                     self.input_num[obj_key] += 1
                     self.output_num[obj_key] += 1
                     self.input_tokens[obj_key] += count_tokens(str(input_message))
-                    self.output_tokens[obj_key] += count_tokens(str(result))
+                    self.output_tokens[obj_key] += count_tokens(result_str)
                 # print("=> Input_Monitor Func@"+str(output_func)+" of Agent @"+str(obj_key)+", Name: ["+str(self.names[obj_key])+"]")
                 # print("   Input: "+str(input_message))
                 # print("=> Output_Monitor Func@"+str(output_func)+" of Agent @"+str(obj_key)+", Name: ["+str(self.names[obj_key])+"]")
-                # print("   Output: "+str(result))
+                # print("   Output: "+result_str)
             else:
                 if args:
                     if isinstance(args[0], type(self.agents[obj_key])):
@@ -511,6 +539,7 @@ class AgentMonitor:
                         result = output_func(*args, **kwargs)
                 else:
                     result = output_func(*args, **kwargs)
+                result_str = parse_message(result)
                 history_len = max(self.input_len[obj_key], self.output_len[obj_key], self.state_len[obj_key])
                 if self.output_len[obj_key] == history_len:
                     self.history[obj_key].append(
@@ -518,7 +547,7 @@ class AgentMonitor:
                             "name": self.names[obj_key],
                             "content": {
                                 "input": "",
-                                "output": str(result),
+                                "output": result_str,
                                 "next state": "",
                                 "context": "",
                             }
@@ -528,18 +557,18 @@ class AgentMonitor:
                         self.history[obj_key][-1]["content"]["context"] = "\n".join(str(item) for item in get_attribute(self.agents[obj_key], self.context_in_str[obj_key]))
                     self.output_len[obj_key] += 1
                     self.output_num[obj_key] += 1
-                    self.output_tokens[obj_key] += count_tokens(str(result))
+                    self.output_tokens[obj_key] += count_tokens(result_str)
                     self.sequence.append(obj_key)
                 else:
-                    self.history[obj_key][-1]["content"]["output"] = str(result)
+                    self.history[obj_key][-1]["content"]["output"] = result_str
                     if self.context_in_str[obj_key]:
                         self.history[obj_key][-1]["content"]["context"] = "\n".join(str(item) for item in get_attribute(self.agents[obj_key], self.context_in_str[obj_key]))
                     self.output_len[obj_key] = history_len
                     self.output_num[obj_key] += 1
-                    self.output_tokens[obj_key] += count_tokens(str(result))
+                    self.output_tokens[obj_key] += count_tokens(result_str)
                 # print("=> Output_Monitor Func@"+str(output_func)+" of Agent @"+str(obj_key)+", Name: ["+str(self.names[obj_key])+"]")
                 # print("=> Output_Monitor Name: ["+str(self.names[obj_key])+"]")
-                # print("   Output: "+str(result))
+                # print("   Output: "+result_str)
 
             # traverse the actions and record the prompt and response for each node (post_edit feature)
             # the :actions: is used in metagpt
@@ -649,6 +678,7 @@ class AgentMonitor:
                 elif turbulence_type == 3:
                     args_list[1] = add_shuffled_noise(args_list[1], input_noise_prob)
                 input_message = args_list[1]
+                input_message = parse_message(input_message)
                 new_args = tuple(args_list)
                 result = await input_func(*new_args[1:], **kwargs)
             else:
@@ -660,6 +690,7 @@ class AgentMonitor:
                 elif turbulence_type == 3:
                     args_list[0] = add_shuffled_noise(args_list[0], input_noise_prob)
                 input_message = args_list[0]
+                input_message = parse_message(input_message)
                 new_args = tuple(args_list)
                 result = await input_func(*new_args, **kwargs)
             history_len = max(self.input_len[obj_key], self.output_len[obj_key], self.state_len[obj_key])
@@ -703,6 +734,7 @@ class AgentMonitor:
                 elif turbulence_type == 3:
                     args_list[1] = add_shuffled_noise(args_list[1], input_noise_prob)
                 input_message = args_list[1]
+                input_message = parse_message(input_message)
                 new_args = tuple(args_list)
                 result = input_func(*new_args[1:], **kwargs)
             else:
@@ -714,6 +746,7 @@ class AgentMonitor:
                 elif turbulence_type == 3:
                     args_list[0] = add_shuffled_noise(args_list[0], input_noise_prob)
                 input_message = args_list[0]
+                input_message = parse_message(input_message)
                 new_args = tuple(args_list)
                 result = input_func(*new_args, **kwargs)
             history_len = max(self.input_len[obj_key], self.output_len[obj_key], self.state_len[obj_key])
@@ -758,6 +791,7 @@ class AgentMonitor:
                     elif input_turbulence_type == 3:
                         args_list[1] = add_shuffled_noise(args_list[1], input_noise_prob)
                     input_message = args_list[1]
+                    input_message = parse_message(input_message)
                     new_args = tuple(args_list)
                     result = await output_func(*new_args[1:], **kwargs)
                     if output_turbulence_type == 1:
@@ -775,6 +809,7 @@ class AgentMonitor:
                     elif input_turbulence_type == 3:
                         args_list[0] = add_shuffled_noise(args_list[0], input_noise_prob)
                     input_message = args_list[0]
+                    input_message = parse_message(input_message)
                     new_args = tuple(args_list)
                     result = await output_func(*new_args, **kwargs)
                     if output_turbulence_type == 1:
@@ -783,6 +818,7 @@ class AgentMonitor:
                         result = add_masked_noise(result, output_noise_prob)
                     elif output_turbulence_type == 3:
                         result = add_shuffled_noise(result, output_noise_prob)
+                result_str = parse_message(result)
                 history_len = max(self.output_len[obj_key], self.state_len[obj_key])
                 if self.output_len[obj_key] == history_len:
                     self.history[obj_key].append(
@@ -790,7 +826,7 @@ class AgentMonitor:
                             "name": self.names[obj_key],
                             "content": {
                                 "input": str(input_message),
-                                "output": str(result),
+                                "output": result_str,
                                 "next state": "",
                                 "context": "",
                             }
@@ -802,22 +838,22 @@ class AgentMonitor:
                     self.input_num[obj_key] += 1
                     self.output_num[obj_key] += 1
                     self.input_tokens[obj_key] += count_tokens(str(input_message))
-                    self.output_tokens[obj_key] += count_tokens(str(result))
+                    self.output_tokens[obj_key] += count_tokens(result_str)
                     self.sequence.append(obj_key)
                 else:
                     self.history[obj_key][-1]["content"]["input"] = str(input_message)
-                    self.history[obj_key][-1]["content"]["output"] = str(result)
+                    self.history[obj_key][-1]["content"]["output"] = result_str
                     if self.context_in_str[obj_key]:
                         self.history[obj_key][-1]["content"]["context"] = "\n".join(str(item) for item in get_attribute(self.agents[obj_key], self.context_in_str[obj_key]))
                     self.output_len[obj_key] = history_len
                     self.input_num[obj_key] += 1
                     self.output_num[obj_key] += 1
                     self.input_tokens[obj_key] += count_tokens(str(input_message))
-                    self.output_tokens[obj_key] += count_tokens(str(result))
+                    self.output_tokens[obj_key] += count_tokens(result_str)
                 # print("=> Input_Monitor Func@"+str(output_func)+" of Agent @"+str(obj_key)+", Name: ["+str(self.names[obj_key])+"]")
                 # print("   Input: "+str(input_message))
                 # print("=> Output_Monitor Func@"+str(output_func)+" of Agent @"+str(obj_key)+", Name: ["+str(self.names[obj_key])+"]")
-                # print("   Output: "+str(result))
+                # print("   Output: "+result_str)
             else:
                 if args:
                     if isinstance(args[0], type(self.agents[obj_key])):
@@ -901,6 +937,7 @@ class AgentMonitor:
 
 
 
+                result_str = parse_message(result)
                 history_len = max(self.input_len[obj_key], self.output_len[obj_key], self.state_len[obj_key])
                 if self.output_len[obj_key] == history_len:
                     self.history[obj_key].append(
@@ -908,7 +945,7 @@ class AgentMonitor:
                             "name": self.names[obj_key],
                             "content": {
                                 "input": "",
-                                "output": str(result),
+                                "output": result_str,
                                 "next state": "",
                                 "context": "",
                             }
@@ -918,18 +955,18 @@ class AgentMonitor:
                         self.history[obj_key][-1]["content"]["context"] = "\n".join(str(item) for item in get_attribute(self.agents[obj_key], self.context_in_str[obj_key]))
                     self.output_len[obj_key] += 1
                     self.output_num[obj_key] += 1
-                    self.output_tokens[obj_key] += count_tokens(str(result))
+                    self.output_tokens[obj_key] += count_tokens(result_str)
                     self.sequence.append(obj_key)
                 else:
-                    self.history[obj_key][-1]["content"]["output"] = str(result)
+                    self.history[obj_key][-1]["content"]["output"] = result_str
                     if self.context_in_str[obj_key]:
                         self.history[obj_key][-1]["content"]["context"] = "\n".join(str(item) for item in get_attribute(self.agents[obj_key], self.context_in_str[obj_key]))
                     self.output_len[obj_key] = history_len
                     self.output_num[obj_key] += 1
-                    self.output_tokens[obj_key] += count_tokens(str(result))
+                    self.output_tokens[obj_key] += count_tokens(result_str)
                 # print("=> Output_Monitor Func@"+str(output_func)+" of Agent @"+str(obj_key)+", Name: ["+str(self.names[obj_key])+"]")
                 # print("=> Output_Monitor Name: ["+str(self.names[obj_key])+"]")
-                # print("   Output: "+str(result))
+                # print("   Output: "+result_str)
 
             # traverse the actions and record the prompt and response for each node (post_edit feature)
             # the :actions: is used in metagpt
@@ -970,6 +1007,7 @@ class AgentMonitor:
                     elif input_turbulence_type == 3:
                         args_list[1] = add_shuffled_noise(args_list[1], input_noise_prob)
                     input_message = args_list[1]
+                    input_message = parse_message(input_message)
                     new_args = tuple(args_list)
                     result = output_func(*new_args[1:], **kwargs)
                     if output_turbulence_type == 1:
@@ -987,6 +1025,7 @@ class AgentMonitor:
                     elif input_turbulence_type == 3:
                         args_list[0] = add_shuffled_noise(args_list[0], input_noise_prob)
                     input_message = args_list[0]
+                    input_message = parse_message(input_message)
                     new_args = tuple(args_list)
                     result = output_func(*new_args, **kwargs)
                     if output_turbulence_type == 1:
@@ -995,6 +1034,7 @@ class AgentMonitor:
                         result = add_masked_noise(result, output_noise_prob)
                     elif output_turbulence_type == 3:
                         result = add_shuffled_noise(result, output_noise_prob)
+                result_str = parse_message(result)
                 history_len = max(self.output_len[obj_key], self.state_len[obj_key])
                 if self.output_len[obj_key] == history_len:
                     self.history[obj_key].append(
@@ -1002,7 +1042,7 @@ class AgentMonitor:
                             "name": self.names[obj_key],
                             "content": {
                                 "input": str(input_message),
-                                "output": str(result),
+                                "output": result_str,
                                 "next state": "",
                                 "context": "",
                             }
@@ -1014,22 +1054,22 @@ class AgentMonitor:
                     self.input_num[obj_key] += 1
                     self.output_num[obj_key] += 1
                     self.input_tokens[obj_key] += count_tokens(str(input_message))
-                    self.output_tokens[obj_key] += count_tokens(str(result))
+                    self.output_tokens[obj_key] += count_tokens(result_str)
                     self.sequence.append(obj_key)
                 else:
                     self.history[obj_key][-1]["content"]["input"] = str(input_message)
-                    self.history[obj_key][-1]["content"]["output"] = str(result)
+                    self.history[obj_key][-1]["content"]["output"] = result_str
                     if self.context_in_str[obj_key]:
                         self.history[obj_key][-1]["content"]["context"] = "\n".join(str(item) for item in get_attribute(self.agents[obj_key], self.context_in_str[obj_key]))
                     self.output_len[obj_key] = history_len
                     self.input_num[obj_key] += 1
                     self.output_num[obj_key] += 1
                     self.input_tokens[obj_key] += count_tokens(str(input_message))
-                    self.output_tokens[obj_key] += count_tokens(str(result))
+                    self.output_tokens[obj_key] += count_tokens(result_str)
                 # print("=> Input_Monitor Func@"+str(output_func)+" of Agent @"+str(obj_key)+", Name: ["+str(self.names[obj_key])+"]")
                 # print("   Input: "+str(input_message))
                 # print("=> Output_Monitor Func@"+str(output_func)+" of Agent @"+str(obj_key)+", Name: ["+str(self.names[obj_key])+"]")
-                # print("   Output: "+str(result))
+                # print("   Output: "+result_str)
             else:
                 if args:
                     if isinstance(args[0], type(self.agents[obj_key])):
@@ -1056,6 +1096,7 @@ class AgentMonitor:
                         result = add_masked_noise(result, output_noise_prob)
                     elif output_turbulence_type == 3:
                         result = add_shuffled_noise(result, output_noise_prob)
+                result_str = parse_message(result)
                 history_len = max(self.input_len[obj_key], self.output_len[obj_key], self.state_len[obj_key])
                 if self.output_len[obj_key] == history_len:
                     self.history[obj_key].append(
@@ -1063,7 +1104,7 @@ class AgentMonitor:
                             "name": self.names[obj_key],
                             "content": {
                                 "input": "",
-                                "output": str(result),
+                                "output": result_str,
                                 "next state": "",
                                 "context": "",
                             }
@@ -1073,18 +1114,18 @@ class AgentMonitor:
                         self.history[obj_key][-1]["content"]["context"] = "\n".join(str(item) for item in get_attribute(self.agents[obj_key], self.context_in_str[obj_key]))
                     self.output_len[obj_key] += 1
                     self.output_num[obj_key] += 1
-                    self.output_tokens[obj_key] += count_tokens(str(result))
+                    self.output_tokens[obj_key] += count_tokens(result_str)
                     self.sequence.append(obj_key)
                 else:
-                    self.history[obj_key][-1]["content"]["output"] = str(result)
+                    self.history[obj_key][-1]["content"]["output"] = result_str
                     if self.context_in_str[obj_key]:
                         self.history[obj_key][-1]["content"]["context"] = "\n".join(str(item) for item in get_attribute(self.agents[obj_key], self.context_in_str[obj_key]))
                     self.output_len[obj_key] = history_len
                     self.output_num[obj_key] += 1
-                    self.output_tokens[obj_key] += count_tokens(str(result))
+                    self.output_tokens[obj_key] += count_tokens(result_str)
                 # print("=> Output_Monitor Func@"+str(output_func)+" of Agent @"+str(obj_key)+", Name: ["+str(self.names[obj_key])+"]")
                 # print("=> Output_Monitor Name: ["+str(self.names[obj_key])+"]")
-                # print("   Output: "+str(result))
+                # print("   Output: "+result_str)
 
             # traverse the actions and record the prompt and response for each node (post_edit feature)
             # the :actions: is used in metagpt
