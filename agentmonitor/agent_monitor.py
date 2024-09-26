@@ -42,11 +42,14 @@ def parse_message(obj):
             new_obj.append(new_obj_i)
         return new_obj
     else:
-        attrs = vars(obj)
-        for attr, value in attrs.items():
-            if attr == "content":
-                return str(value)
-        return str(obj)
+        if hasattr(obj, '__dict__'):
+            attrs = vars(obj)
+            for attr, value in attrs.items():
+                if attr == "content":
+                    return str(value)
+            return str(obj)
+        else:
+            return str(obj)
 
 
 @backoff.on_exception(
@@ -79,27 +82,41 @@ def add_gibberish_noise(obj, noise_prob=0.3):
             new_obj.append(new_obj_i)
         return new_obj
     else:
-        attrs = vars(obj)
-        new_obj = copy.deepcopy(obj)
-        for attr, value in attrs.items():
-            if attr == "content":
-                value_type = type(value)
-                value_str = str(value)
-                noisy_value_str = ""
-                for char in value_str:
-                    if char.isalpha() and random.random() < noise_prob:
-                        noisy_value_str += random.choice(["~", "!", "@", "#", "$", "%", "^", "&", "*", "?"])
-                    else:
-                        noisy_value_str += char
-                try:
-                    noisy_value = value_type(noisy_value_str)
-                except Exception as e:
-                    noisy_value = value
-                setattr(new_obj, attr, noisy_value)
-            else:
-                setattr(new_obj, attr, value)
-        return new_obj
-
+        if hasattr(obj, '__dict__'):
+            attrs = vars(obj)
+            new_obj = copy.deepcopy(obj)
+            for attr, value in attrs.items():
+                if attr == "content":
+                    value_type = type(value)
+                    value_str = str(value)
+                    noisy_value_str = ""
+                    for char in value_str:
+                        if char.isalpha() and random.random() < noise_prob:
+                            noisy_value_str += random.choice(["~", "!", "@", "#", "$", "%", "^", "&", "*", "?"])
+                        else:
+                            noisy_value_str += char
+                    try:
+                        noisy_value = value_type(noisy_value_str)
+                    except Exception as e:
+                        noisy_value = value
+                    setattr(new_obj, attr, noisy_value)
+                else:
+                    setattr(new_obj, attr, value)
+            return new_obj
+        else:
+            value_type = type(obj)
+            value_str = str(obj)
+            noisy_value_str = ""
+            for char in value_str:
+                if char.isalpha() and random.random() < noise_prob:
+                    noisy_value_str += random.choice(["~", "!", "@", "#", "$", "%", "^", "&", "*", "?"])
+                else:
+                    noisy_value_str += char
+            try:
+                noisy_value = value_type(noisy_value_str)
+            except Exception as e:
+                noisy_value = obj
+            return noisy_value
 
 def add_masked_noise(obj, noise_prob=0.3):
     if isinstance(obj, list):
@@ -109,27 +126,41 @@ def add_masked_noise(obj, noise_prob=0.3):
             new_obj.append(new_obj_i)
         return new_obj
     else:
-        attrs = vars(obj)
-        new_obj = copy.deepcopy(obj)
-        for attr, value in attrs.items():
-            if attr == "content":
-                value_type = type(value)
-                value_str = str(value)
-                noisy_value_str = ""
-                for char in value_str:
-                    if char.isalpha() and random.random() < noise_prob:
-                        noisy_value_str += random.choice(["_"])
-                    else:
-                        noisy_value_str += char
-                try:
-                    noisy_value = value_type(noisy_value_str)
-                except Exception as e:
-                    noisy_value = value
-                setattr(new_obj, attr, noisy_value)
-            else:
-                setattr(new_obj, attr, value)
-        return new_obj
-
+        if hasattr(obj, '__dict__'):
+            attrs = vars(obj)
+            new_obj = copy.deepcopy(obj)
+            for attr, value in attrs.items():
+                if attr == "content":
+                    value_type = type(value)
+                    value_str = str(value)
+                    noisy_value_str = ""
+                    for char in value_str:
+                        if char.isalpha() and random.random() < noise_prob:
+                            noisy_value_str += random.choice(["_"])
+                        else:
+                            noisy_value_str += char
+                    try:
+                        noisy_value = value_type(noisy_value_str)
+                    except Exception as e:
+                        noisy_value = value
+                    setattr(new_obj, attr, noisy_value)
+                else:
+                    setattr(new_obj, attr, value)
+            return new_obj
+        else:
+            value_type = type(obj)
+            value_str = str(obj)
+            noisy_value_str = ""
+            for char in value_str:
+                if char.isalpha() and random.random() < noise_prob:
+                    noisy_value_str += random.choice(["_"])
+                else:
+                    noisy_value_str += char
+            try:
+                noisy_value = value_type(noisy_value_str)
+            except Exception as e:
+                noisy_value = obj
+            return noisy_value
 
 def add_shuffled_noise(obj, noise_prob=0.3):
     if isinstance(obj, list):
@@ -139,29 +170,46 @@ def add_shuffled_noise(obj, noise_prob=0.3):
             new_obj.append(new_obj_i)
         return new_obj
     else:
-        attrs = vars(obj)
-        new_obj = copy.deepcopy(obj)
-        for attr, value in attrs.items():
-            if attr == "content":
-                value_type = type(value)
-                value_str = str(value)
-                words = re.findall(r"\b\w+\b", value_str)     
-                num_splits = max(1, int(len(words) * noise_prob))
-                split_points = random.sample(range(1, len(words)), num_splits)
-                split_points.sort()
-                split_words = [words[i:j] for i, j in zip([0] + split_points, split_points + [None])]
-                random.shuffle(split_words)
-                shuffled_words = [word for split in split_words for word in split]
-                noisy_value_str = "".join(shuffled_words)       
-                try:
-                    noisy_value = value_type(noisy_value_str)
-                except Exception as e:
-                    noisy_value = value
-                setattr(new_obj, attr, noisy_value)
-            else:
-                setattr(new_obj, attr, value)
-        return new_obj
-
+        if hasattr(obj, '__dict__'):
+            attrs = vars(obj)
+            new_obj = copy.deepcopy(obj)
+            for attr, value in attrs.items():
+                if attr == "content":
+                    value_type = type(value)
+                    value_str = str(value)
+                    words = re.findall(r"\b\w+\b", value_str)     
+                    num_splits = max(1, int(len(words) * noise_prob))
+                    split_points = random.sample(range(1, len(words)), num_splits)
+                    split_points.sort()
+                    split_words = [words[i:j] for i, j in zip([0] + split_points, split_points + [None])]
+                    random.shuffle(split_words)
+                    shuffled_words = [word for split in split_words for word in split]
+                    noisy_value_str = "".join(shuffled_words)       
+                    try:
+                        noisy_value = value_type(noisy_value_str)
+                    except Exception as e:
+                        noisy_value = value
+                    setattr(new_obj, attr, noisy_value)
+                else:
+                    setattr(new_obj, attr, value)
+            return new_obj
+        else:
+            value = copy.deepcopy(obj)
+            value_type = type(value)
+            value_str = str(value)
+            words = re.findall(r"\b\w+\b", value_str)     
+            num_splits = max(1, int(len(words) * noise_prob))
+            split_points = random.sample(range(1, len(words)), num_splits)
+            split_points.sort()
+            split_words = [words[i:j] for i, j in zip([0] + split_points, split_points + [None])]
+            random.shuffle(split_words)
+            shuffled_words = [word for split in split_words for word in split]
+            noisy_value_str = "".join(shuffled_words)       
+            try:
+                noisy_value = value_type(noisy_value_str)
+            except Exception as e:
+                noisy_value = value
+            return noisy_value
 
 class AgentMonitor:
     def __init__(self, *args, **kwargs):
