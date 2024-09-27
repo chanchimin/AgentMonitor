@@ -33,7 +33,7 @@ pip install -r requirements.txt
 
 ~~~py
 import fire
-from multibench import AgentMonitor
+from agentmonitor import AgentMonitor
 
 class Agent:
     # ...
