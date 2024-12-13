@@ -151,7 +151,8 @@ class ChatAgent(BaseAgent):
         r"""Initializes the stored messages list with the initial system
         message.
         """
-        self.stored_messages: List[MessageType] = [self.system_message]
+        self.stored_messages: List[MessageType] = []
+        self.update_messages(self.system_message)
 
     def update_messages(self, message: ChatMessage) -> List[MessageType]:
         r"""Updates the stored messages list with a new message.
