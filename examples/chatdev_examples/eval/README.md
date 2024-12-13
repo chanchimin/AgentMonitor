@@ -8,7 +8,7 @@
 
 3. **Consistency** measures how closely the generated software code aligns with the original requirement description, quantified as the cosine distance between the semantic embeddings of the textual requirements and the generated software code. A higher score indicates a greater degree of consistency with the requirements.
 
-4. **Quality** is a comprehensive metric that integrates various factors to assess the overall quality of software, quantified by multiplying completeness, executability, and consistency. A higher quality score suggests a higher overall satisfaction with the software generated, implying a lower need for further manual intervention.
+4. **Quality** is a comprehensive metric that integrates various factors to assess the overall quality of software, quantified by multiplying completeness, executability, and consistency. A higher quality score suggests a higher overall satisfaction with the software generated, implying a lower need for further manual intervention.
 
 ### Usage
 
