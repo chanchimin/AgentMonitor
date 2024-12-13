@@ -64,6 +64,7 @@ def build_net(agents, history):
     ]
     for info in history:
         message = info["Content"]["input"]
+        source_found = False
         for input_record in input_history:
 
             # NOTE: the logic here is because we store all the message during the env in metagpt runs, and it
@@ -80,7 +81,18 @@ def build_net(agents, history):
                 info_net["tokens"][node_from][node_to] += token_num
                 info_net["node"][node_from]["weight"] += 1
                 info_net["node"][node_to]["weight"] += 1
+                source_found = True
                 break
+        
+        if not source_found:
+            node_from = agents_mapping[agents[-1]["ID"]]
+            node_to = agents_mapping[info["Agent"]["ID"]]
+            info_net["edge"][node_from][node_to] += 1
+            token_num = count_tokens(message)
+            info_net["tokens"][node_from][node_to] += token_num
+            info_net["node"][node_from]["weight"] += 1
+            info_net["node"][node_to]["weight"] += 1
+        
         if info["Content"]["output"]:
             input_history.append(
                 {
