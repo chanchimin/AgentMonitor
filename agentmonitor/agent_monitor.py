@@ -47,6 +47,12 @@ def parse_message(obj):
             for attr, value in attrs.items():
                 if attr == "content":
                     return str(value)
+                elif attr == "msgs":
+                    for item in value:
+                        item_attrs = vars(item)
+                        for item_attr, item_value in item_attrs.items():
+                            if item_attr == "content":
+                                return str(item_value)
             return str(obj)
         else:
             return str(obj)
